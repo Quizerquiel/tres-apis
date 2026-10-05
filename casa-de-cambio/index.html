@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Casa de Cambio Lupita</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Share+Tech+Mono&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --pared: #c9b48a;
+    --tablero: #17231c;
+    --amarillo: #f6c945;
+    --rojo: #d6452f;
+    --verde: #5fc27a;
+    --papel: #fbf8ef;
+    --tinta: #2b2b2b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+      repeating-linear-gradient(90deg, rgba(0,0,0,.035) 0 2px, transparent 2px 46px),
+      var(--pared);
+    font-family: "Courier Prime", monospace;
+    color: var(--tinta);
+    padding: 24px 16px 60px;
+  }
+  .toldo {
+    max-width: 980px; margin: 0 auto;
+    height: 46px;
+    background: repeating-linear-gradient(90deg, var(--rojo) 0 48px, #f3eadb 48px 96px);
+    border-radius: 6px 6px 0 0;
+    clip-path: polygon(0 0,100% 0,100% 70%,97% 100%,94% 70%,91% 100%,88% 70%,85% 100%,82% 70%,79% 100%,76% 70%,73% 100%,70% 70%,67% 100%,64% 70%,61% 100%,58% 70%,55% 100%,52% 70%,49% 100%,46% 70%,43% 100%,40% 70%,37% 100%,34% 70%,31% 100%,28% 70%,25% 100%,22% 70%,19% 100%,16% 70%,13% 100%,10% 70%,7% 100%,4% 70%,0 100%);
+  }
+  .local { max-width: 980px; margin: 0 auto; }
+  .letrero {
+    text-align: center;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: clamp(38px, 7vw, 72px);
+    letter-spacing: 3px;
+    color: var(--tablero);
+    margin: 18px 0 2px;
+    text-shadow: 2px 2px 0 rgba(255,255,255,.35);
+  }
+  .sub { text-align: center; margin: 0 0 22px; font-size: 15px; }
+  .grid { display: grid; grid-template-columns: 1.35fr 1fr; gap: 22px; align-items: start; }
+  @media (max-width: 820px) { .grid { grid-template-columns: 1fr; } }
+
+  /* Tablero de tasas */
+  .tablero {
+    background: var(--tablero);
+    border: 10px solid #3b2c1c;
+    border-radius: 6px;
+    padding: 16px 16px 10px;
+    box-shadow: 0 10px 0 rgba(0,0,0,.15);
+    color: var(--amarillo);
+    font-family: "Share Tech Mono", monospace;
+  }
+  .tablero header { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+  .tablero header span { font-size: 13px; color: #9fb5a5; }
+  .tablero select {
+    background: #0e1712; color: var(--amarillo); border: 1px solid #344a3c;
+    font-family: inherit; font-size: 15px; padding: 4px 6px;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-weight: normal; font-size: 12px; color: #9fb5a5; padding: 4px 6px; border-bottom: 1px dashed #344a3c; }
+  td { padding: 6px; font-size: 17px; border-bottom: 1px solid #22332a; }
+  td.num { text-align: right; white-space: nowrap; }
+  td small { display: block; margin-top: 2px; }
+  tr { cursor: pointer; }
+  tr:hover td { background: #1f3027; }
+  tr.activa td { background: #2b3f32; }
+  .flap {
+    display: inline-block; min-width: .72em; text-align: center;
+    background: #0b120e; margin: 0 1px; padding: 0 1px; border-radius: 2px;
+    position: relative;
+  }
+  .flap::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: rgba(0,0,0,.6); }
+  .sube { color: var(--verde); font-size: 13px; }
+  .baja { color: #ff8a70; font-size: 13px; }
+  .tablero footer { font-size: 12px; color: #6f8a77; margin-top: 8px; }
+
+  /* Ventanilla */
+  .ventanilla {
+    background: #e9dfc7;
+    border: 3px solid #3b2c1c;
+    border-radius: 6px;
+    padding: 16px;
+  }
+  .ventanilla h2 { font-family: "Bebas Neue", sans-serif; letter-spacing: 1px; font-weight: normal; margin: 0 0 10px; font-size: 28px; }
+  .fila { display: flex; gap: 8px; margin-bottom: 10px; }
+  .fila input, .fila select {
+    font-family: inherit; font-size: 18px; padding: 8px; border: 2px solid var(--tinta); background: var(--papel); min-width: 0;
+  }
+  .fila input { flex: 1; }
+  button {
+    font-family: "Bebas Neue", sans-serif; font-size: 22px; letter-spacing: 1px;
+    background: var(--rojo); color: #fff; border: 0; padding: 8px 16px; cursor: pointer;
+    box-shadow: 0 4px 0 #8f2b1c; width: 100%;
+  }
+  button:active { transform: translateY(3px); box-shadow: 0 1px 0 #8f2b1c; }
+  .intercambiar { background: var(--tinta); box-shadow: 0 4px 0 #000; width: auto; font-size: 18px; }
+
+  .ranura { height: 10px; background: #1b1b1b; border-radius: 6px; margin: 16px 6px 0; }
+  .ticket-zona { overflow: hidden; padding: 0 18px; min-height: 20px; }
+  .ticket {
+    background: var(--papel);
+    padding: 16px 16px 22px;
+    font-size: 14px;
+    transform: translateY(-110%);
+    transition: transform 1.1s steps(14);
+    --dientes: radial-gradient(circle at 8px 0, transparent 6px, var(--papel) 6.5px);
+    -webkit-mask: linear-gradient(#000 0 0) top/100% calc(100% - 8px) no-repeat, var(--dientes) bottom/16px 8px repeat-x;
+            mask: linear-gradient(#000 0 0) top/100% calc(100% - 8px) no-repeat, var(--dientes) bottom/16px 8px repeat-x;
+  }
+  .ticket.sale { transform: translateY(0); }
+  .ticket .centro { text-align: center; }
+  .ticket hr { border: 0; border-top: 1px dashed #999; }
+  .ticket .grande { font-size: 24px; font-weight: bold; text-align: center; margin: 8px 0; }
+  .ticket .linea { display: flex; justify-content: space-between; }
+
+  /* Gráfica */
+  .cuaderno {
+    grid-column: 1 / -1;
+    background:
+      linear-gradient(#cfe1f0 1px, transparent 1px) 0 0 / 100% 22px,
+      linear-gradient(90deg, #cfe1f0 1px, transparent 1px) 0 0 / 22px 100%,
+      var(--papel);
+    border: 1px solid #b9a77f;
+    padding: 18px 18px 14px;
+    box-shadow: 4px 6px 0 rgba(0,0,0,.12);
+    transform: rotate(-.4deg);
+  }
+  .cuaderno h3 { margin: 0 0 4px; font-size: 20px; }
+  .veredicto { font-size: 17px; margin: 4px 0 10px; }
+  .veredicto b { background: var(--amarillo); padding: 0 4px; }
+  svg { width: 100%; height: 220px; display: block; }
+  .nota { font-size: 12px; color: #6b5d43; margin-top: 6px; }
+  .error { background: var(--rojo); color: #fff; padding: 10px; margin-bottom: 12px; display: none; }
+</style>
+</head>
+<body>
+<div class="toldo"></div>
+<main class="local">
+  <h1 class="letrero">Casa de Cambio Lupita</h1>
+  <p class="sub">Tasas del Banco Central Europeo · se actualizan cada día hábil</p>
+  <div class="error" id="error"></div>
+
+  <div class="grid">
+    <section class="tablero">
+      <header>
+        <label>Base:
+          <select id="base"></select>
+        </label>
+        <span id="fecha">cargando…</span>
+      </header>
+      <table>
+        <thead><tr><th>Moneda</th><th style="text-align:right">1 <span id="baseTxt">USD</span> =</th><th style="text-align:right">vs ayer</th></tr></thead>
+        <tbody id="tasas"></tbody>
+      </table>
+      <footer>Toca una fila para ver su historial abajo.</footer>
+    </section>
+
+    <section class="ventanilla">
+      <h2>Ventanilla</h2>
+      <div class="fila">
+        <input id="monto" type="number" min="0" step="any" value="100" aria-label="Monto">
+        <select id="de" aria-label="De"></select>
+      </div>
+      <div class="fila" style="align-items:center">
+        <select id="a" aria-label="A" style="flex:1"></select>
+        <button class="intercambiar" id="swap" title="Intercambiar">⇄</button>
+      </div>
+      <button id="cambiar">Imprimir ticket</button>
+      <div class="ranura"></div>
+      <div class="ticket-zona"><div class="ticket" id="ticket"></div></div>
+    </section>
+
+    <section class="cuaderno">
+      <h3 id="tituloGraf">¿Cambio hoy o espero?</h3>
+      <p class="veredicto" id="veredicto"></p>
+      <svg id="graf" viewBox="0 0 800 220" preserveAspectRatio="none"></svg>
+      <p class="nota">Últimos 90 días. La línea punteada es el promedio.</p>
+    </section>
+  </div>
+</main>
+
+<script>
+const API = "https://api.frankfurter.dev/v1";
+const NOMBRES = {
+  USD: "Dólar EE.UU.", EUR: "Euro", MXN: "Peso mexicano", GBP: "Libra esterlina", JPY: "Yen japonés",
+  CAD: "Dólar canadiense", BRL: "Real brasileño", CHF: "Franco suizo", CNY: "Yuan chino", AUD: "Dólar australiano",
+  KRW: "Won surcoreano", INR: "Rupia india", SEK: "Corona sueca", NOK: "Corona noruega", DKK: "Corona danesa",
+  PLN: "Zloty polaco", CZK: "Corona checa", HUF: "Forinto húngaro", TRY: "Lira turca", ZAR: "Rand sudafricano",
+  ILS: "Nuevo séquel", HKD: "Dólar de Hong Kong", SGD: "Dólar de Singapur", NZD: "Dólar neozelandés",
+  THB: "Baht tailandés", IDR: "Rupia indonesia", MYR: "Ringgit malayo", PHP: "Peso filipino", ISK: "Corona islandesa", RON: "Leu rumano", BGN: "Lev búlgaro"
+};
+const FAVORITAS = ["MXN", "EUR", "USD", "GBP", "JPY", "CAD", "BRL", "CHF", "CNY", "KRW"];
+
+const $ = id => document.getElementById(id);
+let monedaGraf = "MXN";
+
+function flaps(texto) {
+  return [...texto].map(c => `<span class="flap">${c}</span>`).join("");
+}
+function fmt(n) {
+  const dec = n >= 100 ? 2 : n >= 1 ? 4 : 5;
+  return n.toLocaleString("es-MX", { minimumFractionDigits: dec, maximumFractionDigits: dec });
+}
+function mostrarError(msg) { $("error").textContent = msg; $("error").style.display = "block"; }
+
+async function getJSON(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error("La API respondió " + r.status);
+  return r.json();
+}
+
+async function cargarMonedas() {
+  const lista = await getJSON(`${API}/currencies`);
+  const opts = Object.keys(lista).map(c => `<option value="${c}">${c} · ${NOMBRES[c] || lista[c]}</option>`).join("");
+  for (const id of ["base", "de", "a"]) $(id).innerHTML = opts;
+  $("base").value = "USD"; $("de").value = "USD"; $("a").value = "MXN";
+}
+
+function hace(dias) {
+  const d = new Date(); d.setDate(d.getDate() - dias);
+  return d.toISOString().slice(0, 10);
+}
+
+async function cargarTablero() {
+  const base = $("base").value;
+  $("baseTxt").textContent = base;
+  const destinos = FAVORITAS.filter(c => c !== base).slice(0, 8);
+  // pedimos una semana para comparar el último día contra el anterior
+  const serie = await getJSON(`${API}/${hace(7)}..?from=${base}&to=${destinos.join(",")}`);
+  const fechas = Object.keys(serie.rates).sort();
+  const hoy = serie.rates[fechas.at(-1)], ayer = serie.rates[fechas.at(-2)] || hoy;
+  $("fecha").textContent = "al " + new Date(fechas.at(-1) + "T12:00").toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" });
+  $("tasas").innerHTML = destinos.map(c => {
+    const cambio = (hoy[c] - ayer[c]) / ayer[c] * 100;
+    const flecha = Math.abs(cambio) < 0.005 ? `<span style="color:#9fb5a5">= 0.00%</span>`
+      : cambio > 0 ? `<span class="sube">▲ ${cambio.toFixed(2)}%</span>` : `<span class="baja">▼ ${Math.abs(cambio).toFixed(2)}%</span>`;
+    return `<tr data-c="${c}" class="${c === monedaGraf ? "activa" : ""}"><td>${flaps(c)} <small style="color:#9fb5a5">${NOMBRES[c] || ""}</small></td><td class="num">${flaps(fmt(hoy[c]))}</td><td class="num">${flecha}</td></tr>`;
+  }).join("");
+  if (!destinos.includes(monedaGraf)) monedaGraf = destinos[0];
+  dibujarHistorial();
+}
+
+async function dibujarHistorial() {
+  const base = $("base").value;
+  document.querySelectorAll("#tasas tr").forEach(tr => tr.classList.toggle("activa", tr.dataset.c === monedaGraf));
+  $("tituloGraf").textContent = `${base} → ${monedaGraf}: ¿cambio hoy o espero?`;
+  const serie = await getJSON(`${API}/${hace(90)}..?from=${base}&to=${monedaGraf}`);
+  const fechas = Object.keys(serie.rates).sort();
+  const vals = fechas.map(f => serie.rates[f][monedaGraf]);
+  const min = Math.min(...vals), max = Math.max(...vals), prom = vals.reduce((a, b) => a + b) / vals.length;
+  const W = 800, H = 220, pad = 14;
+  const x = i => pad + i * (W - 2 * pad) / (vals.length - 1);
+  const y = v => H - pad - (v - min) / ((max - min) || 1) * (H - 2 * pad);
+  // un poquito de temblor para que parezca trazo a mano
+  const puntos = vals.map((v, i) => `${x(i).toFixed(1)},${(y(v) + Math.sin(i * 2.7) * 0.8).toFixed(1)}`).join(" ");
+  const ultimo = vals.at(-1);
+  $("graf").innerHTML = `
+    <line x1="${pad}" x2="${W - pad}" y1="${y(prom)}" y2="${y(prom)}" stroke="#d6452f" stroke-dasharray="6 6" stroke-width="1.5"/>
+    <polyline points="${puntos}" fill="none" stroke="#1d3c78" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="${x(vals.length - 1)}" cy="${y(ultimo)}" r="6" fill="none" stroke="#d6452f" stroke-width="2"/>
+    <text x="${pad + 4}" y="${pad + 4}" font-size="13" fill="#555" font-family="Courier Prime">máx ${fmt(max)}</text>
+    <text x="${pad + 4}" y="${H - pad - 4}" font-size="13" fill="#555" font-family="Courier Prime">mín ${fmt(min)}</text>`;
+  const dif = (ultimo - prom) / prom * 100;
+  let texto;
+  if (Math.abs(dif) < 0.4) texto = `Hoy está <b>casi igual que el promedio</b> (${dif > 0 ? "+" : ""}${dif.toFixed(2)}%). Da lo mismo cambiar hoy o mañana.`;
+  else if (dif > 0) texto = `Hoy te dan <b>${dif.toFixed(1)}% más ${monedaGraf}</b> que el promedio de 3 meses. Buen día para cambiar ${base}.`;
+  else texto = `Hoy te dan <b>${Math.abs(dif).toFixed(1)}% menos ${monedaGraf}</b> que el promedio. Si no hay prisa, Lupita esperaría.`;
+  $("veredicto").innerHTML = texto;
+}
+
+let folio = 1000 + Math.floor(Math.random() * 8000);
+async function imprimirTicket() {
+  const monto = parseFloat($("monto").value);
+  const de = $("de").value, a = $("a").value;
+  const t = $("ticket");
+  if (!(monto > 0)) { $("monto").focus(); return; }
+  t.classList.remove("sale");
+  let total, tasa;
+  if (de === a) { total = monto; tasa = 1; }
+  else {
+    const r = await getJSON(`${API}/latest?amount=${monto}&from=${de}&to=${a}`);
+    total = r.rates[a]; tasa = total / monto;
+  }
+  const ahora = new Date();
+  t.innerHTML = `
+    <div class="centro"><b>CASA DE CAMBIO LUPITA</b><br>Mostrador 2 · Atiende: Lupe</div>
+    <hr>
+    <div class="linea"><span>FOLIO</span><span>${folio++}</span></div>
+    <div class="linea"><span>FECHA</span><span>${ahora.toLocaleDateString("es-MX")} ${ahora.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })}</span></div>
+    <hr>
+    <div class="linea"><span>ENTREGA</span><span>${fmt(monto)} ${de}</span></div>
+    <div class="linea"><span>TIPO DE CAMBIO</span><span>${fmt(tasa)}</span></div>
+    <div class="grande">${fmt(total)} ${a}</div>
+    <hr>
+    <div class="centro">*** GRACIAS POR SU PREFERENCIA ***<br>Cuente su dinero frente a la ventanilla</div>`;
+  requestAnimationFrame(() => requestAnimationFrame(() => t.classList.add("sale")));
+}
+
+$("tasas").addEventListener("click", e => {
+  const tr = e.target.closest("tr"); if (!tr) return;
+  monedaGraf = tr.dataset.c; dibujarHistorial().catch(err => mostrarError(err.message));
+});
+$("base").addEventListener("change", () => cargarTablero().catch(err => mostrarError(err.message)));
+$("cambiar").addEventListener("click", () => imprimirTicket().catch(err => mostrarError(err.message)));
+$("swap").addEventListener("click", () => { const d = $("de").value; $("de").value = $("a").value; $("a").value = d; });
+$("monto").addEventListener("keydown", e => { if (e.key === "Enter") imprimirTicket(); });
+
+cargarMonedas().then(cargarTablero).then(imprimirTicket).catch(err => mostrarError("No se pudo conectar con Frankfurter: " + err.message));
+</script>
+</body>
+</html>

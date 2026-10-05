@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pasaporte Adivinador</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Stardos+Stencil:wght@400;700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --mesa: #3a2a20;
+    --tapa: #6b1d22;
+    --hoja: #efe6cf;
+    --hoja2: #e4d8b8;
+    --tinta: #2a2a35;
+    --azul: #24457a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh;
+    background: radial-gradient(ellipse at 30% 20%, #5a4232, var(--mesa) 70%);
+    font-family: "IBM Plex Serif", serif; color: var(--tinta);
+    display: flex; flex-direction: column; align-items: center;
+    padding: 28px 16px 60px;
+  }
+  .titulo { font-family: "Stardos Stencil", sans-serif; color: #e8cf8a; font-size: clamp(26px, 4.5vw, 40px); letter-spacing: 4px; margin: 0; text-align: center; }
+  .bajada { color: #cbb894; margin: 6px 0 22px; text-align: center; font-style: italic; }
+
+  .libro {
+    width: 100%; max-width: 1040px;
+    display: grid; grid-template-columns: 1fr 1fr;
+    background: var(--tapa); padding: 12px; border-radius: 14px;
+    box-shadow: 0 30px 50px rgba(0,0,0,.45);
+  }
+  @media (max-width: 820px) { .libro { grid-template-columns: 1fr; } }
+  .pagina {
+    position: relative; min-height: 600px; padding: 26px 28px 30px;
+    background:
+      repeating-radial-gradient(circle at 50% 120%, transparent 0 9px, rgba(36,69,122,.06) 9px 10px),
+      repeating-linear-gradient(45deg, transparent 0 14px, rgba(107,29,34,.035) 14px 15px),
+      linear-gradient(90deg, var(--hoja), var(--hoja2));
+  }
+  .pagina.izq { border-radius: 6px 0 0 6px; box-shadow: inset -18px 0 24px -14px rgba(0,0,0,.35); }
+  .pagina.der { border-radius: 0 6px 6px 0; box-shadow: inset 18px 0 24px -14px rgba(0,0,0,.35); }
+  @media (max-width: 820px) { .pagina.izq, .pagina.der { border-radius: 6px; box-shadow: none; } .pagina.der { margin-top: 10px; } }
+  .num-pag { position: absolute; bottom: 10px; left: 0; right: 0; text-align: center; font-size: 12px; color: #8a7a5a; }
+  .encabezado { display: flex; justify-content: space-between; font-family: "Special Elite", monospace; font-size: 12px; letter-spacing: 2px; color: var(--azul); border-bottom: 1px solid rgba(36,69,122,.3); padding-bottom: 6px; margin-bottom: 16px; }
+
+  .foto {
+    width: 180px; height: 120px; float: right; margin: 0 0 12px 14px;
+    border: 1px solid #9a8a6a; background: #d8cba9; overflow: hidden; position: relative;
+  }
+  .foto img { width: 100%; height: 100%; object-fit: cover; transition: filter .6s; }
+  .foto span { position: absolute; bottom: 2px; right: 4px; font-size: 10px; font-family: "Special Elite"; color: #fff; text-shadow: 0 0 3px #000; }
+
+  .campo { font-family: "Special Elite", monospace; margin: 0 0 12px; }
+  .campo small { display: block; font-size: 10px; letter-spacing: 2px; color: var(--azul); }
+  .campo .valor { font-size: 17px; }
+  .campo.oculto .valor { color: transparent; background: repeating-linear-gradient(90deg, #b9ab88 0 10px, transparent 10px 14px); border-radius: 2px; user-select: none; }
+  .campo.recien .valor { animation: maquina .5s steps(8); }
+  @keyframes maquina { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+
+  .control { clear: both; border-top: 1px dashed #9a8a6a; padding-top: 14px; margin-top: 10px; }
+  .control label { font-family: "Special Elite"; font-size: 12px; letter-spacing: 2px; color: var(--azul); }
+  .linea-input { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+  input[type=text] {
+    flex: 1; min-width: 160px; font-family: "Special Elite"; font-size: 18px; padding: 8px 4px;
+    border: 0; border-bottom: 2px solid var(--tinta); background: transparent; outline: none;
+  }
+  button {
+    font-family: "Stardos Stencil"; font-size: 16px; letter-spacing: 1px; cursor: pointer;
+    padding: 8px 14px; border: 2px solid var(--tinta); background: transparent; color: var(--tinta);
+  }
+  button.lleno { background: var(--azul); color: #fff; border-color: var(--azul); }
+  button:disabled { opacity: .4; cursor: default; }
+  .mensaje { min-height: 24px; margin-top: 10px; font-style: italic; }
+  .sacude { animation: sacude .35s; }
+  @keyframes sacude { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+  .marcador { display: flex; gap: 18px; font-family: "Special Elite"; font-size: 13px; margin-top: 18px; color: #5a4a30; flex-wrap: wrap; }
+  .marcador b { font-size: 18px; color: var(--tinta); }
+
+  /* sellos */
+  .sellos { position: relative; height: 520px; }
+  .vacio { font-style: italic; color: #8a7a5a; text-align: center; margin-top: 180px; }
+  .sello {
+    position: absolute; width: 150px; padding: 8px 6px; text-align: center;
+    font-family: "Stardos Stencil"; text-transform: uppercase; line-height: 1.1;
+    border: 3px double currentColor; border-radius: 10px;
+    mix-blend-mode: multiply; opacity: .85;
+    -webkit-mask: radial-gradient(circle at 30% 40%, #000 55%, rgba(0,0,0,.55) 75%, #000 90%);
+  }
+  .sello.redondo { width: 130px; height: 130px; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; }
+  .sello .pais { font-size: 15px; font-weight: 700; }
+  .sello .fecha { font-size: 11px; margin-top: 4px; }
+  .sello .pts { font-size: 11px; }
+  .sello.nuevo { animation: golpe .35s cubic-bezier(.3,1.6,.6,1); }
+  @keyframes golpe { from { transform: scale(2.2) rotate(var(--r)); opacity: 0; } to { transform: scale(1) rotate(var(--r)); opacity: .85; } }
+  .acciones-der { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 13px; }
+  .acciones-der button { font-size: 12px; padding: 4px 8px; }
+  .modo { font-size: 13px; color: #cbb894; margin-top: 14px; }
+  .modo input { accent-color: #e8cf8a; }
+</style>
+</head>
+<body>
+<h1 class="titulo">PASAPORTE ADIVINADOR</h1>
+<p class="bajada">Un agente de migración te da pistas sobre un país. Mientras menos pistas uses, mejor sello te llevas.</p>
+
+<div class="libro">
+  <section class="pagina izq">
+    <div class="encabezado"><span>HOJA DE VISADO</span><span id="expediente">EXP. ----</span></div>
+    <div class="foto"><img id="bandera" alt="Bandera borrosa" src="data:image/gif;base64,R0lGODlhAQABAAAAACw="><span>FOTO</span></div>
+    <div id="pistas"></div>
+    <div class="control">
+      <label for="respuesta">¿A QUÉ PAÍS VAS?</label>
+      <div class="linea-input">
+        <input type="text" id="respuesta" list="paises" autocomplete="off" placeholder="escribe el país…">
+        <datalist id="paises"></datalist>
+        <button class="lleno" id="sellar">Sellar</button>
+      </div>
+      <div class="linea-input">
+        <button id="otraPista">Otra pista</button>
+        <button id="rendirse">Me rindo</button>
+        <button id="siguiente" style="display:none" class="lleno">Siguiente viajero →</button>
+      </div>
+      <p class="mensaje" id="mensaje">Cargando países…</p>
+    </div>
+    <div class="marcador">
+      <span>Puntos <b id="puntos">0</b></span>
+      <span>Racha <b id="racha">0</b></span>
+      <span>Sellos <b id="nSellos">0</b></span>
+    </div>
+    <div class="num-pag">— 14 —</div>
+  </section>
+
+  <section class="pagina der">
+    <div class="encabezado"><span>VISAS / VISAS / VISAS</span><span>REPÚBLICA DE LOS ADIVINOS</span></div>
+    <div class="sellos" id="sellos"><p class="vacio">Todavía no tienes sellos.<br>Adivina tu primer país.</p></div>
+    <div class="acciones-der"><span id="resumen"></span><button id="borrar">Pasaporte nuevo</button></div>
+    <div class="num-pag">— 15 —</div>
+  </section>
+</div>
+<label class="modo"><input type="checkbox" id="dificil"> Modo aduana estricta (incluye territorios e islas raras)</label>
+
+<script>
+// Datos: el mismo dataset abierto que usa REST Countries (mledoze/countries)
+const DATA_URL = "https://cdn.jsdelivr.net/gh/mledoze/countries@master/countries.json";
+const $ = id => document.getElementById(id);
+const idioma = new Intl.DisplayNames(["es"], { type: "language" });
+const moneda = new Intl.DisplayNames(["es"], { type: "currency" });
+const REGIONES = {
+  Africa: "África", Americas: "América", Asia: "Asia", Europe: "Europa", Oceania: "Oceanía", Antarctic: "Antártida",
+  "North America": "Norteamérica", "South America": "Sudamérica", "Central America": "Centroamérica", Caribbean: "el Caribe",
+  "Western Europe": "Europa occidental", "Eastern Europe": "Europa del Este", "Northern Europe": "Europa del norte", "Southern Europe": "Europa del sur",
+  "Central Europe": "Europa central", "Southeast Europe": "Europa del sureste", "Western Asia": "Asia occidental", "Eastern Asia": "Asia oriental",
+  "South-Eastern Asia": "Sudeste asiático", "Southern Asia": "Asia del sur", "Central Asia": "Asia central",
+  "Northern Africa": "Norte de África", "Western Africa": "África occidental", "Eastern Africa": "África oriental",
+  "Middle Africa": "África central", "Southern Africa": "África austral",
+  "Australia and New Zealand": "Australia y Nueva Zelanda", Melanesia: "Melanesia", Micronesia: "Micronesia", Polynesia: "Polinesia"
+};
+const COLORES = ["#24457a", "#7a1d2a", "#1f6a4a", "#5b2a7a", "#8a4a12"];
+
+let paises = [], porCca3 = {}, actual = null, pistasDadas = 0, terminado = false;
+let estado = { puntos: 0, racha: 0, sellos: [] };
+try { estado = JSON.parse(localStorage.getItem("pasaporte")) || estado; } catch {}
+const guardar = () => { try { localStorage.setItem("pasaporte", JSON.stringify(estado)); } catch {} };
+
+const normal = s => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z ]/g, "").trim();
+const nombre = p => p.translations?.spa?.common || p.name.common;
+const miles = n => Math.round(n).toLocaleString("es-MX");
+
+function comparaTamano(area) {
+  const mx = 1964375;
+  if (area > mx * 1.15) return `Le cabrían unos ${(area / mx).toFixed(1)} Méxicos adentro`;
+  if (area > mx * 0.85) return "Más o menos del tamaño de México";
+  if (area > 21041) return `Cabría unas ${Math.round(mx / area)} veces dentro de México`;
+  if (area > 100) return `Es más chico que El Salvador (≈ ${(area / 21041 * 100).toFixed(0)}% de su tamaño)`;
+  return "Tan pequeño que lo cruzas caminando en una tarde";
+}
+
+function construirPistas(p) {
+  const vecinos = (p.borders || []).map(c => porCca3[c] ? nombre(porCca3[c]) : c);
+  const cap = (p.capital && p.capital[0]) || "";
+  const capOculta = cap ? cap[0] + cap.slice(1).replace(/[^\s-]/g, "_") : "no tiene capital oficial";
+  const idiomas = Object.keys(p.languages || {}).map(k => { const n = idioma.of(k); return n === k ? p.languages[k] : n; });
+  const monedas = Object.keys(p.currencies || {}).map(k => { try { return moneda.of(k); } catch { return k; } });
+  return [
+    ["REGIÓN", `${REGIONES[p.subregion] || p.subregion || ""}${p.region ? " · " + (REGIONES[p.region] || p.region) : ""}`],
+    ["SUPERFICIE", `${miles(p.area)} km² — ${comparaTamano(p.area)}`],
+    ["IDIOMAS", idiomas.join(", ") || "sin idioma oficial registrado"],
+    ["MONEDA", monedas.join(", ") || "usa moneda de otro país"],
+    ["FRONTERAS", vecinos.length ? `${vecinos.length} vecino${vecinos.length > 1 ? "s" : ""}: ${vecinos.join(", ")}` : (p.landlocked ? "sin vecinos (raro…)" : "ninguna por tierra: es isla o rodeado de mar")],
+    ["CAPITAL", capOculta],
+    ["COORDENADAS", `${Math.abs(p.latlng[0]).toFixed(0)}° ${p.latlng[0] >= 0 ? "N" : "S"}, ${Math.abs(p.latlng[1]).toFixed(0)}° ${p.latlng[1] >= 0 ? "E" : "O"}`]
+  ];
+}
+
+function pintarPistas(recien = -1) {
+  const lista = construirPistas(actual);
+  $("pistas").innerHTML = lista.map(([k, v], i) => {
+    const visible = i < pistasDadas || terminado;
+    return `<div class="campo ${visible ? "" : "oculto"} ${i === recien ? "recien" : ""}"><small>${k}</small><span class="valor">${visible ? v : "xxxxxxxxxxxxxxxx"}</span></div>`;
+  }).join("");
+  const blur = terminado ? 0 : Math.max(0, 22 - pistasDadas * 3.2);
+  $("bandera").style.filter = `blur(${blur}px) grayscale(${terminado ? 0 : 1 - pistasDadas / 9})`;
+  $("otraPista").disabled = terminado || pistasDadas >= lista.length;
+}
+
+function nuevoViajero() {
+  const pool = paises.filter(p => $("dificil").checked || (p.independent && p.unMember));
+  actual = pool[Math.floor(Math.random() * pool.length)];
+  pistasDadas = 2; terminado = false;
+  $("bandera").src = `https://flagcdn.com/w320/${actual.cca2.toLowerCase()}.png`;
+  $("expediente").textContent = "EXP. " + Math.floor(1000 + Math.random() * 9000);
+  $("respuesta").value = ""; $("respuesta").disabled = false; $("sellar").disabled = false; $("rendirse").disabled = false;
+  $("siguiente").style.display = "none";
+  $("mensaje").textContent = "El agente te mira por encima de los lentes…";
+  pintarPistas();
+  $("respuesta").focus();
+}
+
+function puntosPosibles() { return Math.max(1, 8 - pistasDadas); }
+
+function intentar() {
+  if (terminado) return;
+  const r = normal($("respuesta").value);
+  if (!r) return;
+  const validos = [nombre(actual), actual.name.common, actual.name.official, ...(actual.altSpellings || [])].map(normal);
+  if (validos.includes(r)) {
+    const pts = puntosPosibles();
+    estado.puntos += pts; estado.racha++;
+    estampar(pts);
+    terminar(`¡Correcto! ${nombre(actual)}. Te ganas ${pts} punto${pts > 1 ? "s" : ""}.`);
+  } else {
+    $("respuesta").classList.add("sacude");
+    setTimeout(() => $("respuesta").classList.remove("sacude"), 400);
+    const frases = ["El agente niega con la cabeza.", "«Ese no es su destino, señor(a).»", "Revisa tus papeles…", "Mmm, no. Te doy otra pista."];
+    $("mensaje").textContent = frases[Math.floor(Math.random() * frases.length)];
+    if (pistasDadas < 7) { pistasDadas++; pintarPistas(pistasDadas - 1); }
+    $("respuesta").select();
+  }
+}
+
+function terminar(texto) {
+  terminado = true;
+  $("mensaje").textContent = texto;
+  $("respuesta").disabled = true; $("sellar").disabled = true; $("rendirse").disabled = true;
+  $("siguiente").style.display = "";
+  pintarPistas();
+  $("bandera").style.filter = "none";
+  actualizarMarcador(); guardar();
+  $("siguiente").focus();
+}
+
+function estampar(pts) {
+  const hoy = new Date().toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" });
+  estado.sellos.push({
+    pais: nombre(actual), fecha: hoy, pts,
+    x: 4 + Math.random() * 58, y: 2 + Math.random() * 70, r: (Math.random() * 40 - 20).toFixed(1),
+    color: COLORES[Math.floor(Math.random() * COLORES.length)], redondo: Math.random() < .4
+  });
+  if (estado.sellos.length > 14) estado.sellos.shift();
+  pintarSellos(true);
+}
+
+function pintarSellos(conNuevo = false) {
+  if (!estado.sellos.length) { $("sellos").innerHTML = `<p class="vacio">Todavía no tienes sellos.<br>Adivina tu primer país.</p>`; return; }
+  $("sellos").innerHTML = estado.sellos.map((s, i) => `
+    <div class="sello ${s.redondo ? "redondo" : ""} ${conNuevo && i === estado.sellos.length - 1 ? "nuevo" : ""}"
+         style="left:${s.x}%;top:${s.y}%;color:${s.color};--r:${s.r}deg;transform:rotate(${s.r}deg)">
+      <div class="pts">ADMITIDO · ${"★".repeat(Math.min(s.pts, 6))}</div>
+      <div class="pais">${s.pais}</div>
+      <div class="fecha">${s.fecha}</div>
+    </div>`).join("");
+}
+
+function actualizarMarcador() {
+  $("puntos").textContent = estado.puntos; $("racha").textContent = estado.racha; $("nSellos").textContent = estado.sellos.length;
+  $("resumen").textContent = estado.sellos.length ? `Último: ${estado.sellos.at(-1).pais}` : "";
+}
+
+$("sellar").onclick = intentar;
+$("respuesta").addEventListener("keydown", e => { if (e.key === "Enter") intentar(); });
+$("otraPista").onclick = () => { pistasDadas++; pintarPistas(pistasDadas - 1); $("mensaje").textContent = `Ahora este país vale ${puntosPosibles()} punto(s).`; };
+$("rendirse").onclick = () => { estado.racha = 0; terminar(`Era ${nombre(actual)}. Capital: ${actual.capital?.[0] || "—"}. La racha vuelve a cero.`); };
+$("siguiente").onclick = nuevoViajero;
+$("dificil").onchange = nuevoViajero;
+$("borrar").onclick = () => { if (confirm("¿Tirar este pasaporte y empezar de cero?")) { estado = { puntos: 0, racha: 0, sellos: [] }; guardar(); pintarSellos(); actualizarMarcador(); } };
+
+fetch(DATA_URL).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(data => {
+  paises = data.filter(p => p.latlng && p.area > 0);
+  paises.forEach(p => porCca3[p.cca3] = p);
+  $("paises").innerHTML = paises.map(nombre).sort((a, b) => a.localeCompare(b, "es")).map(n => `<option value="${n}">`).join("");
+  pintarSellos(); actualizarMarcador(); nuevoViajero();
+}).catch(err => { $("mensaje").textContent = "No se pudieron cargar los países (" + err.message + ")."; });
+</script>
+</body>
+</html>

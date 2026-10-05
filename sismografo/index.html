@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Estación Sismográfica</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Archivo+Black&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --metal: #2c3136;
+    --metal2: #3c434a;
+    --papel: #f4f1e6;
+    --rejilla: #e3c9c3;
+    --aguja: #1b1b1b;
+    --rojo: #c8321e;
+    --ambar: #ffb238;
+    --texto: #d8dde2;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; background: #1d2125; color: var(--texto);
+    font-family: "IBM Plex Mono", monospace; padding: 24px 16px 60px;
+  }
+  .equipo { max-width: 1100px; margin: 0 auto; }
+  .placa {
+    display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap;
+    background: linear-gradient(180deg, var(--metal2), var(--metal));
+    border: 1px solid #555d65; border-radius: 6px 6px 0 0; padding: 14px 18px;
+  }
+  .placa h1 { font-family: "Archivo Black", sans-serif; font-size: clamp(20px, 3.4vw, 30px); margin: 0; letter-spacing: 1px; color: #eef1f3; }
+  .placa p { margin: 2px 0 0; font-size: 12px; color: #9aa4ad; }
+  .leds { display: flex; gap: 14px; font-size: 11px; color: #9aa4ad; align-items: center; }
+  .led { width: 10px; height: 10px; border-radius: 50%; background: #3a3f44; display: inline-block; margin-right: 5px; vertical-align: -1px; }
+  .led.on { background: #52e07a; box-shadow: 0 0 8px #52e07a; }
+  .led.rojo.on { background: var(--rojo); box-shadow: 0 0 8px var(--rojo); animation: parpadeo 1s infinite; }
+  @keyframes parpadeo { 50% { opacity: .3; } }
+
+  .tambor {
+    position: relative; background: var(--metal); padding: 18px 0; border-left: 1px solid #555d65; border-right: 1px solid #555d65;
+  }
+  .rodillo { height: 12px; margin: 0 8px; border-radius: 6px; background: linear-gradient(180deg, #8d969e, #4a5157 60%, #2b3035); }
+  canvas#tira { display: block; width: 100%; height: 300px; background: var(--papel); cursor: crosshair; }
+  .etiqueta {
+    position: absolute; pointer-events: none; background: #111; color: #fff; font-size: 12px; padding: 6px 8px;
+    border-left: 3px solid var(--ambar); display: none; max-width: 260px; z-index: 2;
+  }
+
+  .panel {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: #555d65;
+    border: 1px solid #555d65; border-top: 0;
+  }
+  @media (max-width: 760px) { .panel { grid-template-columns: repeat(2, 1fr); } }
+  .medidor { background: var(--metal); padding: 12px 14px; }
+  .medidor small { display: block; font-size: 10px; letter-spacing: 2px; color: #8a949d; }
+  .medidor .display { font-size: 26px; color: var(--ambar); text-shadow: 0 0 8px rgba(255,178,56,.4); font-weight: 600; }
+  .medidor .display small { display: inline; font-size: 12px; letter-spacing: 0; color: #c49040; }
+
+  .controles {
+    display: flex; gap: 10px; flex-wrap: wrap; align-items: center; background: #24292d; border: 1px solid #555d65; border-top: 0;
+    border-radius: 0 0 6px 6px; padding: 10px 14px; font-size: 13px;
+  }
+  .perilla {
+    background: #15181b; color: var(--texto); border: 1px solid #555d65; padding: 6px 10px; font-family: inherit; font-size: 13px; cursor: pointer; border-radius: 3px;
+  }
+  .perilla.activa { border-color: var(--ambar); color: var(--ambar); }
+  .controles label { display: flex; align-items: center; gap: 6px; }
+  .controles .esp { flex: 1; }
+
+  .abajo { display: grid; grid-template-columns: 1.25fr 1fr; gap: 18px; margin-top: 18px; }
+  @media (max-width: 860px) { .abajo { grid-template-columns: 1fr; } }
+  h2 { font-family: "Archivo Black", sans-serif; font-size: 15px; letter-spacing: 1px; margin: 0 0 8px; color: #eef1f3; }
+  h2 span { font-family: "IBM Plex Mono"; font-size: 11px; color: #8a949d; letter-spacing: 0; font-weight: 400; }
+
+  .bitacora {
+    background: #0f1113; border: 1px solid #333a40; height: 380px; overflow-y: auto; padding: 8px 0; font-size: 13px;
+  }
+  .reg { display: grid; grid-template-columns: 52px 54px 1fr; gap: 8px; padding: 4px 12px; cursor: pointer; }
+  .reg:hover, .reg.sel { background: #1f2428; }
+  .reg .hora { color: #7d8790; }
+  .reg .mag { font-weight: 600; }
+  .reg .lugar { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .reg .lugar a { color: inherit; text-decoration: none; }
+  .m1 { color: #8fa3b3; } .m2 { color: #c9d4a3; } .m3 { color: var(--ambar); } .m4 { color: #ff7b45; } .m5 { color: #ff3b2b; }
+
+  .mapa { background: #0f1113; border: 1px solid #333a40; padding: 8px; }
+  canvas#mapa { width: 100%; height: auto; display: block; }
+  .pie { font-size: 11px; color: #7d8790; margin-top: 6px; }
+  .error { background: var(--rojo); color: #fff; padding: 10px; margin-bottom: 12px; display: none; }
+</style>
+</head>
+<body>
+<div class="equipo">
+  <div class="error" id="error"></div>
+  <div class="placa">
+    <div>
+      <h1>ESTACIÓN SISMOGRÁFICA Nº 7</h1>
+      <p>Registro de la red mundial del USGS · el papel avanza en tiempo real</p>
+    </div>
+    <div class="leds">
+      <span><i class="led" id="ledOn"></i>EN LÍNEA</span>
+      <span><i class="led rojo" id="ledFuerte"></i>M5+ EN EL PERIODO</span>
+    </div>
+  </div>
+
+  <div class="tambor">
+    <div class="rodillo"></div>
+    <canvas id="tira"></canvas>
+    <div class="rodillo"></div>
+    <div class="etiqueta" id="etiqueta"></div>
+  </div>
+
+  <div class="panel">
+    <div class="medidor"><small>REGISTROS</small><div class="display" id="dTotal">—</div></div>
+    <div class="medidor"><small>MÁXIMO</small><div class="display" id="dMax">—</div></div>
+    <div class="medidor"><small>ÚLTIMO HACE</small><div class="display" id="dUltimo">—</div></div>
+    <div class="medidor"><small>ENERGÍA LIBERADA ≈</small><div class="display" id="dEnergia">—</div></div>
+  </div>
+
+  <div class="controles">
+    <span>Periodo:</span>
+    <button class="perilla activa" data-feed="all_day">24 horas</button>
+    <button class="perilla" data-feed="2.5_week">Semana (M2.5+)</button>
+    <button class="perilla" data-feed="4.5_month">Mes (M4.5+)</button>
+    <span class="esp"></span>
+    <label><input type="checkbox" id="soloLatam"> Solo Latinoamérica</label>
+  </div>
+
+  <div class="abajo">
+    <section>
+      <h2>BITÁCORA <span>· clic para ubicarlo en la tira y el mapa</span></h2>
+      <div class="bitacora" id="bitacora"></div>
+    </section>
+    <section>
+      <h2>MAPA SIN MAPA <span>· no hay continentes dibujados: los sismos solos trazan las placas</span></h2>
+      <div class="mapa"><canvas id="mapa" width="720" height="360"></canvas></div>
+      <p class="pie">Proyección equirectangular. El tamaño del punto crece con la magnitud.</p>
+    </section>
+  </div>
+</div>
+
+<script>
+const BASE = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/";
+const $ = id => document.getElementById(id);
+const LATAM = ["Mexico", "Guatemala", "Honduras", "El Salvador", "Nicaragua", "Costa Rica", "Panama", "Colombia", "Venezuela",
+  "Ecuador", "Peru", "Bolivia", "Chile", "Argentina", "Paraguay", "Uruguay", "Brazil", "Cuba", "Dominican Republic", "Haiti",
+  "Puerto Rico", "B.C., MX", "Baja California", "Oaxaca", "Chiapas", "Guerrero", "Jalisco", "Michoacan", "Sonora"];
+
+let feed = "all_day", sismos = [], visibles = [], seleccionado = null;
+let inicio = 0, fin = 0;
+
+const tira = $("tira"), ctx = tira.getContext("2d");
+const mapa = $("mapa"), mctx = mapa.getContext("2d");
+
+function claseMag(m) { return "m" + Math.max(1, Math.min(5, Math.floor(m))); }
+function colorMag(m) { return m >= 5 ? "#ff3b2b" : m >= 4 ? "#ff7b45" : m >= 3 ? "#ffb238" : m >= 2 ? "#c9d4a3" : "#8fa3b3"; }
+function lugarEs(p) {
+  return (p || "lugar desconocido")
+    .replace(/(\d+) km (\w+) of /, (_, km, dir) => `${km} km al ${dir.replace(/W/g, "O")} de `)
+    .replace(/^(north|south|east|west)(ern)? of (the )?/i, (_, d) => ({ north: "al norte de ", south: "al sur de ", east: "al este de ", west: "al oeste de " })[d.toLowerCase()])
+    .replace(/ Islands/, " (islas)")
+    .replace(/region$/, "(región)");
+}
+function haceTexto(ms) {
+  const min = Math.round(ms / 60000);
+  if (min < 60) return [min, "min"];
+  const h = min / 60; if (h < 48) return [h.toFixed(1), "h"];
+  return [(h / 24).toFixed(1), "días"];
+}
+
+async function cargar() {
+  $("ledOn").classList.remove("on");
+  try {
+    const r = await fetch(BASE + feed + ".geojson");
+    if (!r.ok) throw new Error("USGS respondió " + r.status);
+    const data = await r.json();
+    sismos = data.features
+      .filter(f => f.properties.mag != null)
+      .map(f => ({ id: f.id, mag: f.properties.mag, lugar: f.properties.place, t: f.properties.time, url: f.properties.url,
+        lon: f.geometry.coordinates[0], lat: f.geometry.coordinates[1], prof: f.geometry.coordinates[2], tsunami: f.properties.tsunami }))
+      .sort((a, b) => a.t - b.t);
+    $("error").style.display = "none";
+    $("ledOn").classList.add("on");
+    filtrar();
+  } catch (e) {
+    $("error").textContent = "No pude leer la red sísmica: " + e.message; $("error").style.display = "block";
+  }
+}
+
+function filtrar() {
+  const latam = $("soloLatam").checked;
+  visibles = latam ? sismos.filter(s => LATAM.some(p => (s.lugar || "").includes(p))) : sismos;
+  fin = Date.now();
+  inicio = feed === "all_day" ? fin - 864e5 : feed === "2.5_week" ? fin - 7 * 864e5 : fin - 30 * 864e5;
+  seleccionado = null;
+  medidores(); bitacora(); dibujarMapa();
+}
+
+function medidores() {
+  $("dTotal").innerHTML = visibles.length;
+  const max = visibles.reduce((a, s) => s.mag > (a?.mag ?? -9) ? s : a, null);
+  $("dMax").innerHTML = max ? `M${max.mag.toFixed(1)}` : "—";
+  const ult = visibles.at(-1);
+  if (ult) { const [n, u] = haceTexto(Date.now() - ult.t); $("dUltimo").innerHTML = `${n} <small>${u}</small>`; } else $("dUltimo").textContent = "—";
+  // energía en joules: log10(E) = 1.5M + 4.8 → la comparamos con toneladas de TNT (4.184e9 J)
+  const joules = visibles.reduce((a, s) => a + Math.pow(10, 1.5 * s.mag + 4.8), 0);
+  const tnt = joules / 4.184e9;
+  $("dEnergia").innerHTML = tnt >= 1000 ? `${(tnt / 1000).toLocaleString("es-MX", { maximumFractionDigits: 1 })} <small>kt TNT</small>` : `${tnt.toLocaleString("es-MX", { maximumFractionDigits: 1 })} <small>t TNT</small>`;
+  $("ledFuerte").classList.toggle("on", visibles.some(s => s.mag >= 5));
+}
+
+function bitacora() {
+  const largo = feed !== "all_day";
+  $("bitacora").innerHTML = [...visibles].reverse().map(s => {
+    const d = new Date(s.t);
+    const hora = largo ? d.toLocaleDateString("es-MX", { day: "2-digit", month: "2-digit" }) : d.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", hour12: false });
+    return `<div class="reg ${claseMag(s.mag)}" data-id="${s.id}"><span class="hora">${hora}</span><span class="mag">M${s.mag.toFixed(1)}</span><span class="lugar" title="${lugarEs(s.lugar)} · ${s.prof.toFixed(0)} km de profundidad">${s.tsunami ? "🌊 " : ""}${lugarEs(s.lugar)}</span></div>`;
+  }).join("") || `<div class="reg"><span></span><span></span><span class="lugar">Sin registros en este periodo.</span></div>`;
+}
+
+// ---------- tira de papel ----------
+function ajustar() {
+  const dpr = window.devicePixelRatio || 1;
+  tira.width = tira.clientWidth * dpr; tira.height = tira.clientHeight * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+function xDe(t, W) { return (t - inicio) / (fin - inicio) * (W - 40) + 10; }
+
+// ruido determinista para que la línea no "baile" entre cuadros
+function ruido(x) { return Math.sin(x * 0.9) * 0.6 + Math.sin(x * 2.3 + 1) * 0.4 + Math.sin(x * 5.1 + 2) * 0.25; }
+
+function dibujarTira(ahora) {
+  const W = tira.clientWidth, H = tira.clientHeight, mid = H / 2;
+  ctx.clearRect(0, 0, W, H);
+  // rejilla que se desplaza como si el papel avanzara
+  const corrimiento = (ahora / 60) % 20;
+  ctx.strokeStyle = "#e9d6d1"; ctx.lineWidth = 1;
+  for (let x = -corrimiento; x < W; x += 20) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+  for (let y = mid % 20; y < H; y += 20) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+  ctx.strokeStyle = "#d9aaa1";
+  for (let x = -corrimiento * 5 % 100; x < W; x += 100) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+
+  // marcas de tiempo
+  ctx.fillStyle = "#9a6a60"; ctx.font = "11px IBM Plex Mono";
+  const pasos = feed === "all_day" ? 6 : feed === "2.5_week" ? 7 : 6;
+  for (let i = 0; i <= pasos; i++) {
+    const t = inicio + (fin - inicio) * i / pasos, x = xDe(t, W);
+    const d = new Date(t);
+    const txt = feed === "all_day" ? d.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", hour12: false }) : d.toLocaleDateString("es-MX", { day: "numeric", month: "short" });
+    ctx.fillText(txt, Math.min(x, W - 45), H - 6);
+  }
+
+  // traza: suma de "ondas" amortiguadas por cada sismo
+  const escala = H * 0.45;
+  ctx.beginPath(); ctx.lineWidth = 1.2; ctx.strokeStyle = "#1b1b1b";
+  const anchoOnda = feed === "all_day" ? 9 : 4;
+  for (let px = 0; px <= W - 30; px += 0.75) {
+    let y = ruido(px + ahora / 400) * 0.9;
+    for (const s of visibles) {
+      const dx = px - xDe(s.t, W);
+      if (dx < -2 || dx > anchoOnda * 6) continue;
+      const amp = Math.min(escala, Math.pow(1.85, s.mag) * 2.2);
+      y += amp * Math.exp(-Math.max(0, dx) / anchoOnda) * Math.sin(dx * 1.7);
+    }
+    px === 0 ? ctx.moveTo(px, mid + y) : ctx.lineTo(px, mid + y);
+  }
+  ctx.stroke();
+
+  // la aguja al final, temblando un poco
+  const xA = W - 30, yA = mid + ruido(ahora / 90) * 2;
+  ctx.strokeStyle = "#555"; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(W, mid - 60); ctx.lineTo(xA, yA); ctx.stroke();
+  ctx.fillStyle = "#c8321e"; ctx.beginPath(); ctx.arc(xA, yA, 3, 0, Math.PI * 2); ctx.fill();
+
+  // sismo seleccionado
+  if (seleccionado) {
+    const x = xDe(seleccionado.t, W);
+    ctx.strokeStyle = "rgba(200,50,30,.7)"; ctx.setLineDash([4, 4]); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H - 18); ctx.stroke(); ctx.setLineDash([]);
+  }
+  requestAnimationFrame(dibujarTira);
+}
+
+tira.addEventListener("mousemove", e => {
+  const W = tira.clientWidth, rect = tira.getBoundingClientRect(), mx = e.clientX - rect.left;
+  let mejor = null, dist = 14;
+  for (const s of visibles) { const d = Math.abs(xDe(s.t, W) - mx); if (d < dist || (d < 14 && mejor && s.mag > mejor.mag)) { mejor = s; dist = Math.min(dist, d); } }
+  const et = $("etiqueta");
+  if (!mejor) { et.style.display = "none"; return; }
+  et.style.display = "block";
+  et.style.left = Math.min(mx + 30, W - 250) + "px"; et.style.top = (e.clientY - rect.top + 10) + "px";
+  et.innerHTML = `<b>M${mejor.mag.toFixed(1)}</b> · ${new Date(mejor.t).toLocaleString("es-MX")}<br>${lugarEs(mejor.lugar)}<br>Profundidad: ${mejor.prof.toFixed(0)} km`;
+});
+tira.addEventListener("mouseleave", () => $("etiqueta").style.display = "none");
+
+// ---------- mapa ----------
+function proy(lon, lat) { return [(lon + 180) / 360 * mapa.width, (90 - lat) / 180 * mapa.height]; }
+function dibujarMapa() {
+  const W = mapa.width, H = mapa.height;
+  mctx.fillStyle = "#0f1113"; mctx.fillRect(0, 0, W, H);
+  mctx.strokeStyle = "#1e2327"; mctx.lineWidth = 1;
+  for (let lon = -180; lon <= 180; lon += 30) { const [x] = proy(lon, 0); mctx.beginPath(); mctx.moveTo(x, 0); mctx.lineTo(x, H); mctx.stroke(); }
+  for (let lat = -60; lat <= 60; lat += 30) { const [, y] = proy(0, lat); mctx.beginPath(); mctx.moveTo(0, y); mctx.lineTo(W, y); mctx.stroke(); }
+  mctx.strokeStyle = "#2c3338"; const [, ecu] = proy(0, 0); mctx.beginPath(); mctx.moveTo(0, ecu); mctx.lineTo(W, ecu); mctx.stroke();
+  for (const s of visibles) {
+    const [x, y] = proy(s.lon, s.lat);
+    mctx.fillStyle = colorMag(s.mag); mctx.globalAlpha = .75;
+    mctx.beginPath(); mctx.arc(x, y, Math.max(1.2, Math.pow(s.mag, 1.6) / 2.2), 0, Math.PI * 2); mctx.fill();
+  }
+  mctx.globalAlpha = 1;
+  if (seleccionado) {
+    const [x, y] = proy(seleccionado.lon, seleccionado.lat);
+    mctx.strokeStyle = "#fff"; mctx.lineWidth = 1.5;
+    for (const r of [8, 16]) { mctx.beginPath(); mctx.arc(x, y, r, 0, Math.PI * 2); mctx.stroke(); }
+  }
+}
+
+$("bitacora").addEventListener("click", e => {
+  const fila = e.target.closest(".reg[data-id]"); if (!fila) return;
+  seleccionado = visibles.find(s => s.id === fila.dataset.id);
+  document.querySelectorAll(".reg.sel").forEach(x => x.classList.remove("sel")); fila.classList.add("sel");
+  dibujarMapa();
+});
+$("bitacora").addEventListener("dblclick", e => {
+  const fila = e.target.closest(".reg[data-id]"); if (!fila) return;
+  const s = visibles.find(x => x.id === fila.dataset.id); if (s) window.open(s.url, "_blank");
+});
+document.querySelectorAll(".perilla").forEach(b => b.addEventListener("click", () => {
+  document.querySelectorAll(".perilla").forEach(x => x.classList.toggle("activa", x === b));
+  feed = b.dataset.feed; cargar();
+}));
+$("soloLatam").addEventListener("change", filtrar);
+window.addEventListener("resize", ajustar);
+
+ajustar(); requestAnimationFrame(dibujarTira); cargar();
+setInterval(cargar, 5 * 60 * 1000); // la red de USGS actualiza el feed cada minuto; con 5 basta
+</script>
+</body>
+</html>
